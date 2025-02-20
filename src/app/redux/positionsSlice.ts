@@ -1,18 +1,45 @@
-import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 
 interface Position {
   id: number;
   name: string;
-  parentId: number | null;
+  parentId: number | null | undefined;
+  description?: string;
 }
 
 interface PositionsState {
   positions: Position[];
+  loading: boolean;
+  error: string | null;
 }
 
 const initialState: PositionsState = {
   positions: [],
+  loading: false,
+  error: null,
 };
+
+export const fetchPositions = createAsyncThunk("positions/fetchPositions", async () => {
+  const response = await fetch("http://localhost:3000/position"); 
+  if (!response.ok) {
+    throw new Error("Failed to fetch positions");
+  }
+  return (await response.json()) as Position[];
+});
+
+export const addPositionAsync = createAsyncThunk("positions/addPosition", async (newPosition: Omit<Position, "id">) => {
+  const response = await fetch("http://localhost:3000/position", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(newPosition),
+  });
+  if (!response.ok) {
+    throw new Error("Failed to add position");
+  }
+  return (await response.json()) as Position;
+});
 
 const positionsSlice = createSlice({
   name: "positions",
@@ -20,7 +47,7 @@ const positionsSlice = createSlice({
   reducers: {
     addPosition: (state, action: PayloadAction<Position>) => {
       const exists = state.positions.some(
-        pos => pos.name === action.payload.name && pos.parentId === action.payload.parentId
+        (pos) => pos.name === action.payload.name && pos.parentId === action.payload.parentId
       );
       if (!exists) {
         state.positions.push(action.payload);
@@ -36,6 +63,24 @@ const positionsSlice = createSlice({
         state.positions[index] = action.payload;
       }
     },
+  },
+  extraReducers: (builder) => {
+    builder
+      .addCase(fetchPositions.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchPositions.fulfilled, (state, action) => {
+        state.positions = action.payload;
+        state.loading = false;
+      })
+      .addCase(fetchPositions.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message || "Failed to fetch positions";
+      })
+      .addCase(addPositionAsync.fulfilled, (state, action) => {
+        state.positions.push(action.payload);
+      });
   },
 });
 
