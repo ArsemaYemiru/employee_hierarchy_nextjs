@@ -107,7 +107,7 @@ export default function Home() {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen p-5 ">
-      <Button onClick={() => { setOpened(true); setEditMode(false); }}>Add Position</Button>
+      <Button className="mb-4 bg-white text-gray-800" onClick={() => { setOpened(true); setEditMode(false); }}>Add Position</Button>
       <Modal
         opened={opened}
         onClose={() => setOpened(false)}
