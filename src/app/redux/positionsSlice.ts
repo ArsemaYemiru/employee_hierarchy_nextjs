@@ -27,19 +27,24 @@ export const fetchPositions = createAsyncThunk("positions/fetchPositions", async
   return (await response.json()) as Position[];
 });
 
-export const addPositionAsync = createAsyncThunk("positions/addPosition", async (newPosition: Omit<Position, "id">) => {
-  const response = await fetch("http://localhost:3000/position", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(newPosition),
-  });
-  if (!response.ok) {
-    throw new Error("Failed to add position");
+export const addPositionAsync = createAsyncThunk(
+  "positions/addPosition",
+  async (newPosition: Omit<Position, "id">) => {
+    const response = await fetch("http://localhost:3000/position", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(newPosition), // Ensure the body matches { name, parentId }
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to add position");
+    }
+
+    return (await response.json()) as Position; // Return the inserted position
   }
-  return (await response.json()) as Position;
-});
+);
 
 const positionsSlice = createSlice({
   name: "positions",
